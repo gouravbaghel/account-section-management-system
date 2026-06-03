@@ -65,7 +65,7 @@ export default function Students() {
   const fetchCourses = useCallback(async () => {
     try {
       const res = await getCourses();
-      setCourses(res.data || res.courses || res || []);
+      setCourses(res.items || res.data || res.courses || (Array.isArray(res) ? res : []));
     } catch (error) {
       console.error('Failed to load courses:', error);
     }
@@ -84,7 +84,7 @@ export default function Students() {
       if (form.course_id) {
         try {
           const res = await getBranches(form.course_id);
-          setBranches(res.data || res.branches || res || []);
+          setBranches(res.items || res.data || res.branches || (Array.isArray(res) ? res : []));
         } catch (error) {
           setBranches([]);
         }

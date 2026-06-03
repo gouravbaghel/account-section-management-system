@@ -82,7 +82,7 @@ export default function FeeStructure() {
   const fetchCourses = useCallback(async () => {
     try {
       const res = await getCourses();
-      setCourses(res.data || res.courses || res || []);
+      setCourses(res.items || res.data || res.courses || (Array.isArray(res) ? res : []));
     } catch (error) {
       console.error('Failed to load courses:', error);
     }

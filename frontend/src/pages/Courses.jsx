@@ -39,7 +39,7 @@ export default function Courses() {
     setLoading(true);
     try {
       const res = await getCourses();
-      setCourses(res.data || res.courses || res || []);
+      setCourses(res.items || res.data || res.courses || (Array.isArray(res) ? res : []));
     } catch (error) {
       toast.error('Failed to load courses');
       console.error(error);
@@ -56,7 +56,7 @@ export default function Courses() {
     setLoadingBranches(courseId);
     try {
       const res = await getBranches(courseId);
-      const branchList = res.data || res.branches || res || [];
+      const branchList = res.items || res.data || res.branches || (Array.isArray(res) ? res : []);
       setBranchesMap((prev) => ({ ...prev, [courseId]: branchList }));
     } catch (error) {
       toast.error('Failed to load branches');
