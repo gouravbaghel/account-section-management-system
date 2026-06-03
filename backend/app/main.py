@@ -38,6 +38,16 @@ async def lifespan(app: FastAPI):
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from app.routers.auth import limiter
+from fastapi.responses import JSONResponse
+
+def custom_rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    response = JSONResponse(
+        {"detail": f"Rate limit exceeded: {exc.detail}"}, status_code=429
+    )
+    response = request.app.state.limiter._inject_headers(
+        response, request.state.view_rate_limit
+    )
+    return response
 
 # Setup JSON Logging
 logger = logging.getLogger("uvicorn.access")
@@ -74,7 +84,7 @@ async def log_requests(request: Request, call_next):
     return response
 
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, custom_rate_limit_handler)
 
 app.add_middleware(
     CORSMiddleware,
