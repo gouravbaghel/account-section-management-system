@@ -37,6 +37,7 @@ export default function Login() {
       navigate(from, { replace: true });
     } catch (err) {
       const message =
+        err.customMessage ||
         err.response?.data?.detail ||
         err.response?.data?.message ||
         'Invalid credentials. Please try again.';
