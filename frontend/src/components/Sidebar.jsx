@@ -16,6 +16,10 @@ import {
   ChevronRight,
   X,
   Building2,
+  Landmark,
+  FileCheck,
+  RefreshCw,
+  Briefcase,
 } from 'lucide-react';
 
 const menuItems = [
@@ -54,6 +58,36 @@ const menuItems = [
     label: 'Expenses',
     icon: Wallet,
     roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.AUDITOR],
+  },
+  {
+    path: '/scholarships',
+    label: 'Scholarships',
+    icon: ScrollText,
+    roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT],
+  },
+  {
+    path: '/loans',
+    label: 'Edu Loans',
+    icon: Landmark,
+    roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT],
+  },
+  {
+    path: '/refunds',
+    label: 'Refunds',
+    icon: RefreshCw,
+    roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT],
+  },
+  {
+    path: '/noc',
+    label: 'NOC',
+    icon: FileCheck,
+    roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT, ROLES.CLERK],
+  },
+  {
+    path: '/employees',
+    label: 'Payroll',
+    icon: Briefcase,
+    roles: [ROLES.SUPER_ADMIN, ROLES.ADMIN, ROLES.ACCOUNTANT],
   },
   {
     path: '/reports',

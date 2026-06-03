@@ -174,7 +174,7 @@ export default function Dashboard() {
               />
               <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f1f5f9' }} />
               <Bar
-                dataKey="amount"
+                dataKey="total"
                 name="Collection"
                 fill="url(#barGradient)"
                 radius={[6, 6, 0, 0]}
@@ -280,23 +280,23 @@ export default function Dashboard() {
             <div className="space-y-3">
               {(charts?.top_dues || []).slice(0, 8).map((student, idx) => (
                 <Link
-                  key={student.id || idx}
-                  to={`/students/${student.id}`}
+                  key={student.student_id || idx}
+                  to={`/students/${student.student_id}`}
                   className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 text-xs font-bold flex-shrink-0">
-                    {student.name?.charAt(0) || '#'}
+                    {student.student_name?.charAt(0) || '#'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">
-                      {student.name || 'Student'}
+                      {student.student_name || 'Student'}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {student.roll_number} • {student.course || 'N/A'}
+                      {student.roll_number}
                     </p>
                   </div>
                   <span className="text-sm font-semibold text-red-500">
-                    {formatCurrency(student.due_amount || student.pending_amount)}
+                    {formatCurrency(student.total_balance)}
                   </span>
                 </Link>
               ))}
@@ -331,7 +331,7 @@ export default function Dashboard() {
                 innerRadius={60}
                 outerRadius={100}
                 paddingAngle={4}
-                dataKey="amount"
+                dataKey="total"
                 nameKey="category"
               >
                 {charts.expense_by_category.map((entry, index) => (

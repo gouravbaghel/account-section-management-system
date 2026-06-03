@@ -50,6 +50,25 @@ export function AuthProvider({ children }) {
     return userData;
   }, []);
 
+  const studentLogin = useCallback(async (admission_number, password) => {
+    // We will need to import loginStudentApi
+    const { loginStudent: loginStudentApi } = await import('../api/auth');
+    const data = await loginStudentApi(admission_number, password);
+    const { access_token, refresh_token, student: studentData } = data;
+
+    // We inject role="student" so frontend treats it like a role
+    const finalUser = { ...studentData, role: 'student' };
+
+    localStorage.setItem('access_token', access_token);
+    localStorage.setItem('refresh_token', refresh_token);
+    localStorage.setItem('user', JSON.stringify(finalUser));
+
+    setUser(finalUser);
+    setIsAuthenticated(true);
+
+    return finalUser;
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
@@ -79,6 +98,7 @@ export function AuthProvider({ children }) {
     isAuthenticated,
     loading,
     login,
+    studentLogin,
     logout,
     hasRole,
     hasAnyRole,

@@ -4,7 +4,7 @@ import {
   GraduationCap, PieChart, TrendingUp, IndianRupee, Filter, Loader2, Printer,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { getReport, downloadReportCSV } from '../api/reports';
+import { getReport, downloadReportCSV, downloadReportExcel } from '../api/reports';
 import DataTable from '../components/DataTable';
 import LoadingSpinner from '../components/LoadingSpinner';
 import EmptyState from '../components/EmptyState';
@@ -159,6 +159,31 @@ export default function Reports() {
       toast.success('CSV exported successfully');
     } catch (error) {
       toast.error('Failed to export CSV');
+      console.error(error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (!selectedType) return;
+    setExporting(true);
+    try {
+      const params = {};
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
+      const blob = await downloadReportExcel(selectedType, params);
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${selectedType}_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Excel exported successfully');
+    } catch (error) {
+      toast.error('Failed to export Excel');
       console.error(error);
     } finally {
       setExporting(false);
@@ -323,6 +348,14 @@ export default function Reports() {
             >
               {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
               Export CSV
+            </button>
+            <button
+              onClick={handleExportExcel}
+              disabled={exporting}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-green-300 text-green-700 rounded-lg hover:bg-green-50 transition-colors text-sm"
+            >
+              {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              Export Excel
             </button>
             <button
               onClick={handlePrint}

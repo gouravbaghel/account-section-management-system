@@ -16,6 +16,7 @@ import { PAYMENT_MODES } from '../utils/constants';
 const TABS = [
   { key: 'fees', label: 'Fee Summary' },
   { key: 'payments', label: 'Payment History' },
+  { key: 'scholarships', label: 'Scholarships' },
 ];
 
 export default function StudentProfile() {
@@ -25,21 +26,24 @@ export default function StudentProfile() {
   const [fees, setFees] = useState([]);
   const [payments, setPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scholarships, setScholarships] = useState([]);
   const [activeTab, setActiveTab] = useState('fees');
   const [downloadingReceipt, setDownloadingReceipt] = useState(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [studentData, feesData, paymentsData] = await Promise.all([
+      const [studentData, feesData, paymentsData, scholarshipsData] = await Promise.all([
         getStudent(id),
         getStudentFees(id).catch(() => ({ data: [] })),
         getPayments({ student_id: id, page_size: 100 }).catch(() => ({ data: [] })),
+        import('../api/scholarships').then(m => m.getScholarships({ student_id: id })).catch(() => ({ items: [] })),
       ]);
       setStudent(studentData.data || studentData);
       setFees(feesData?.items || feesData?.data || feesData?.fees || feesData || []);
       const paymentsList = paymentsData?.items || paymentsData?.data || paymentsData?.payments || paymentsData || [];
       setPayments(Array.isArray(paymentsList) ? paymentsList : []);
+      setScholarships(scholarshipsData?.items || []);
     } catch (error) {
       toast.error('Failed to load student profile');
       console.error(error);
@@ -359,6 +363,39 @@ export default function StudentProfile() {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+            </div>
+          )}
+          {activeTab === 'scholarships' && (
+            <div>
+              {scholarships.length === 0 ? (
+                <EmptyState
+                  icon={BookOpen}
+                  title="No Scholarships"
+                  description="This student doesn't have any scholarships recorded."
+                />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {scholarships.map((s, idx) => (
+                    <div key={s.id || idx} className="bg-gray-50 rounded-xl p-4 border border-gray-100">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-sm font-semibold text-gray-900 truncate">{s.name}</h4>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          s.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                          s.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {s.status.charAt(0).toUpperCase() + s.status.slice(1)}
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-xs text-gray-500">Provider: <span className="font-medium text-gray-900">{s.provider}</span></p>
+                        <p className="text-xs text-gray-500">Amount: <span className="font-medium text-emerald-600">{formatCurrency(s.amount)}</span></p>
+                        <p className="text-xs text-gray-500">Year: <span className="font-medium text-gray-900">{s.academic_year}</span></p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

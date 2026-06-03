@@ -331,3 +331,26 @@ def generate_csv(data: List[Dict[str, Any]], columns: List[str]) -> StreamingRes
         media_type="text/csv",
         headers={"Content-Disposition": f"attachment; filename=report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"},
     )
+
+
+def generate_excel(data: List[Dict[str, Any]], columns: List[str], sheet_name: str = "Report") -> StreamingResponse:
+    """Generate an Excel file as a StreamingResponse using pandas."""
+    import pandas as pd
+    
+    df = pd.DataFrame(data)
+    if not df.empty and columns:
+        # Reorder columns and drop missing ones
+        available_cols = [c for c in columns if c in df.columns]
+        df = df[available_cols]
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
+    
+    output.seek(0)
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={sheet_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"},
+    )

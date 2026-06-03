@@ -13,6 +13,9 @@ export default function Settings() {
     email: '',
     academic_year: '',
     receipt_prefix: '',
+    late_fee_type: 'daily',
+    late_fee_amount: 20.0,
+    late_fee_slabs: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -28,6 +31,9 @@ export default function Settings() {
           email: data.email || '',
           academic_year: data.academic_year || '',
           receipt_prefix: data.receipt_prefix || '',
+          late_fee_type: data.late_fee_type || 'daily',
+          late_fee_amount: data.late_fee_amount || 20.0,
+          late_fee_slabs: data.late_fee_slabs || '',
         });
       } catch (error) {
         toast.error('Failed to load settings');
@@ -165,6 +171,55 @@ export default function Settings() {
                 <p className="text-xs text-gray-400 mt-1">Used in receipt numbers like NIT-2025-00001</p>
               </div>
             </div>
+          </div>
+
+          <div className="px-6 py-4 border-t border-b border-gray-100 bg-gray-50/50 mt-4">
+            <h2 className="text-sm font-semibold text-gray-700">Late Fee Configuration</h2>
+            <p className="text-xs text-gray-500 mt-0.5">Automated late fee calculation engine settings</p>
+          </div>
+
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="label-field">Late Fee Type</label>
+                <select
+                  value={form.late_fee_type}
+                  onChange={(e) => setForm({ ...form, late_fee_type: e.target.value })}
+                  className="input-field"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="slab">Slab-based</option>
+                </select>
+              </div>
+              <div>
+                <label className="label-field">Late Fee Amount</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.late_fee_amount}
+                  onChange={(e) => setForm({ ...form, late_fee_amount: e.target.value })}
+                  className="input-field"
+                  placeholder="e.g. 20.00"
+                />
+                <p className="text-xs text-gray-400 mt-1">Amount per day/week (if daily/weekly)</p>
+              </div>
+            </div>
+            
+            {form.late_fee_type === 'slab' && (
+              <div>
+                <label className="label-field">Late Fee Slabs (JSON)</label>
+                <textarea
+                  value={form.late_fee_slabs}
+                  onChange={(e) => setForm({ ...form, late_fee_slabs: e.target.value })}
+                  className="input-field font-mono text-sm"
+                  rows={4}
+                  placeholder='[{"days": 7, "amount": 100}, {"days": 14, "amount": 250}, {"days": -1, "amount": 500}]'
+                />
+                <p className="text-xs text-gray-400 mt-1">Use -1 for days to represent 'above all others'</p>
+              </div>
+            )}
           </div>
 
           {/* Save Button */}

@@ -10,6 +10,12 @@ export async function createPayment(data) {
   return response.data;
 }
 
+export async function calculateFine(studentFeeId, paymentDate) {
+  const params = paymentDate ? { payment_date: paymentDate } : {};
+  const response = await client.get(`/payments/calculate-fine/${studentFeeId}`, { params });
+  return response.data;
+}
+
 export async function cancelPayment(id, reason) {
   const response = await client.post(`/payments/${id}/cancel`, { reason });
   return response.data;

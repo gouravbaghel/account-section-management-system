@@ -103,6 +103,26 @@ def list_payments(
     )
 
 
+@router.get("/calculate-fine/{student_fee_id}")
+def get_late_fine(
+    student_fee_id: int,
+    payment_date: Optional[date] = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(UserRole.accountant)),
+):
+    """Calculate the current late fine for a student fee."""
+    student_fee = db.query(StudentFee).filter(StudentFee.id == student_fee_id).first()
+    if not student_fee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Student fee with id {student_fee_id} not found",
+        )
+    
+    from app.services.fees import calculate_late_fine
+    fine = calculate_late_fine(db, student_fee, payment_date)
+    return {"fine": float(fine)}
+
+
 @router.post("/", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 def record_payment(
     payment_data: PaymentCreate,
@@ -145,6 +165,15 @@ def record_payment(
             detail="This fee has already been fully paid",
         )
 
+    # Compute expected late fine
+    from app.services.fees import calculate_late_fine
+    expected_fine = calculate_late_fine(db, student_fee, payment_data.payment_date)
+    # If the user passed a fine that is less than expected, we can either override or accept.
+    # For flexibility, we allow accountant to override, but if they pass 0, we auto-apply it.
+    actual_fine = payment_data.late_fine
+    if actual_fine == 0 and expected_fine > 0:
+        actual_fine = float(expected_fine)
+
     # Generate receipt number
     receipt_number = _generate_receipt_number(db)
 
@@ -158,7 +187,7 @@ def record_payment(
         transaction_id=payment_data.transaction_id,
         cheque_number=payment_data.cheque_number,
         payment_date=payment_data.payment_date,
-        late_fine=payment_data.late_fine,
+        late_fine=actual_fine,
         discount=payment_data.discount,
         scholarship_adjustment=payment_data.scholarship_adjustment,
         remarks=payment_data.remarks,

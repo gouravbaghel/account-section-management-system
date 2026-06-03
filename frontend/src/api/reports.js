@@ -12,3 +12,11 @@ export async function downloadReportCSV(reportType, params = {}) {
   });
   return response.data;
 }
+
+export async function downloadReportExcel(reportType, params = {}) {
+  const response = await client.get(`/reports/${reportType}`, {
+    params: { ...params, format: 'excel' },
+    responseType: 'blob',
+  });
+  return response.data;
+}

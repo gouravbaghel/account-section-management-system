@@ -35,6 +35,7 @@ const emptyForm = {
   admission_fee: '',
   misc_fee: '',
   installment_count: '1',
+  due_date: '',
 };
 
 export default function FeeStructure() {
@@ -134,6 +135,7 @@ export default function FeeStructure() {
       admission_fee: feeStruct.admission_fee || '',
       misc_fee: feeStruct.misc_fee || '',
       installment_count: feeStruct.installment_count || '1',
+      due_date: feeStruct.due_date ? feeStruct.due_date.split('T')[0] : '',
     });
     setErrors({});
     setModalOpen(true);
@@ -151,6 +153,7 @@ export default function FeeStructure() {
       payload.semester = payload.semester ? Number(payload.semester) : null;
       payload.installment_count = Number(payload.installment_count) || 1;
       payload.total_amount = computedTotal;
+      payload.due_date = payload.due_date ? `${payload.due_date}T23:59:59` : null;
 
       if (editing) {
         await updateFeeStructure(editing.id, payload);
@@ -272,6 +275,12 @@ export default function FeeStructure() {
       label: 'Year',
       sortable: true,
       render: (val) => <span className="text-sm text-gray-700">{val || '—'}</span>,
+    },
+    {
+      key: 'due_date',
+      label: 'Due Date',
+      sortable: true,
+      render: (val) => <span className="text-sm text-gray-700">{val ? new Date(val).toLocaleDateString() : '—'}</span>,
     },
     {
       key: 'tuition_fee',
@@ -470,6 +479,16 @@ export default function FeeStructure() {
                   placeholder="e.g., 2024-2025"
                 />
                 {errors.academic_year && <p className="text-xs text-red-500 mt-1">{errors.academic_year}</p>}
+              </div>
+              <div>
+                <label className="label-field">Due Date</label>
+                <input
+                  type="date"
+                  value={form.due_date}
+                  onChange={(e) => setForm({ ...form, due_date: e.target.value })}
+                  className="input-field"
+                />
+                <p className="text-xs text-gray-400 mt-1">If set, late fees apply after this date</p>
               </div>
             </div>
           </div>

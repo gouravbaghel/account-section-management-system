@@ -1,7 +1,7 @@
 """
 College settings model — singleton configuration record.
 """
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Numeric
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -18,6 +18,9 @@ class CollegeSettings(Base):
     academic_year = Column(String(20), nullable=False)
     receipt_prefix = Column(String(20), nullable=False, default="NIT")
     receipt_counter = Column(Integer, nullable=False, default=0)
+    late_fee_type = Column(String(50), nullable=False, default="daily")
+    late_fee_amount = Column(Numeric(12, 2), nullable=False, default=20.00)
+    late_fee_slabs = Column(String(1000), nullable=True) # JSON string of slabs
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

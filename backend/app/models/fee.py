@@ -34,6 +34,7 @@ class FeeStructure(Base):
     misc_fee = Column(Numeric(12, 2), nullable=False, default=0)
     total_amount = Column(Numeric(12, 2), nullable=False, default=0)
     installment_count = Column(Integer, nullable=False, default=1)
+    due_date = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -76,6 +77,7 @@ class StudentFee(Base):
     balance = Column(Numeric(12, 2), nullable=False, default=0)
     status = Column(Enum(FeeStatus), index=True, nullable=False, default=FeeStatus.pending)
     academic_year = Column(String(20), nullable=False)
+    due_date = Column(DateTime, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

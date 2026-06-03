@@ -14,6 +14,9 @@ class CollegeSettingsUpdate(BaseModel):
     logo_path: Optional[str] = Field(None, max_length=500)
     academic_year: Optional[str] = Field(None, max_length=20)
     receipt_prefix: Optional[str] = Field(None, max_length=20)
+    late_fee_type: Optional[str] = Field(None, max_length=50)
+    late_fee_amount: Optional[float] = Field(None, ge=0)
+    late_fee_slabs: Optional[str] = Field(None, max_length=1000)
 
 
 class CollegeSettingsResponse(BaseModel):
@@ -26,6 +29,9 @@ class CollegeSettingsResponse(BaseModel):
     academic_year: str
     receipt_prefix: str
     receipt_counter: int
+    late_fee_type: str
+    late_fee_amount: float
+    late_fee_slabs: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

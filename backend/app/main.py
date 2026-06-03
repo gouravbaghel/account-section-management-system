@@ -110,6 +110,20 @@ app.include_router(audit.router)
 app.include_router(settings_router.router)
 app.include_router(users.router)
 
+# Student Portal Routers
+from app.routers import student_auth, portal, scholarships, loans, refunds, noc, employees
+app.include_router(student_auth.router)
+app.include_router(portal.router)
+
+# SCAS Extensions
+app.include_router(scholarships.router, prefix="/api")
+app.include_router(loans.router, prefix="/api")
+app.include_router(refunds.router, prefix="/api")
+app.include_router(noc.router, prefix="/api")
+app.include_router(employees.router, prefix="/api")
+
+from fastapi_pagination import add_pagination
+add_pagination(app)
 
 @app.get("/api/health")
 def health_check():

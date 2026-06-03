@@ -40,6 +40,8 @@ class Student(Base):
     guardian_phone = Column(String(20), nullable=False)
     category = Column(Enum(StudentCategory), nullable=False, default=StudentCategory.general)
     status = Column(Enum(StudentStatus), nullable=False, default=StudentStatus.active)
+    hashed_password = Column(String(255), nullable=True)
+    is_locked = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

@@ -9,6 +9,11 @@ from app.models.payment import Payment, PaymentMode, PaymentStatus
 from app.models.expense import Expense, ExpenseCategory
 from app.models.audit import AuditLog
 from app.models.settings import CollegeSettings
+from app.models.scholarship import Scholarship, ScholarshipStatus
+from app.models.loan import EducationLoan, LoanInstallment, LoanStatus, InstallmentStatus
+from app.models.refund import Refund, RefundType, RefundStatus
+from app.models.noc import NOCRequest, NOCStatus
+from app.models.employee import Employee, Salary, Claim, ClaimType, ClaimStatus, SalaryStatus
 
 __all__ = [
     "User", "UserRole",
@@ -19,4 +24,9 @@ __all__ = [
     "Expense", "ExpenseCategory",
     "AuditLog",
     "CollegeSettings",
+    "Scholarship", "ScholarshipStatus",
+    "EducationLoan", "LoanInstallment", "LoanStatus", "InstallmentStatus",
+    "Refund", "RefundType", "RefundStatus",
+    "NOCRequest", "NOCStatus",
+    "Employee", "Salary", "Claim", "ClaimType", "ClaimStatus", "SalaryStatus",
 ]

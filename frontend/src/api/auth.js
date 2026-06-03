@@ -5,6 +5,11 @@ export async function login(username, password) {
   return response.data;
 }
 
+export async function loginStudent(admission_number, password) {
+  const response = await client.post('/student/auth/login', { admission_number, password });
+  return response.data;
+}
+
 export async function refreshToken(token) {
   const response = await client.post('/auth/refresh', { refresh_token: token });
   return response.data;

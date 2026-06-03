@@ -18,6 +18,7 @@ from app.services.reports import (
     get_scholarship_report,
     get_profit_loss,
     generate_csv,
+    generate_excel,
 )
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
@@ -53,7 +54,7 @@ def generate_report(
     report_type: str,
     date_from: Optional[date] = Query(None, description="Start date"),
     date_to: Optional[date] = Query(None, description="End date"),
-    format: str = Query("json", regex="^(json|csv)$", description="Output format"),
+    format: str = Query("json", regex="^(json|csv|excel)$", description="Output format"),
     course_id: Optional[int] = Query(None, description="Course filter"),
     batch: Optional[str] = Query(None, description="Batch filter"),
     db: Session = Depends(get_db),
@@ -71,6 +72,8 @@ def generate_report(
         data = get_daily_collection(db, target_date)
         if format == "csv":
             return generate_csv(data, _CSV_COLUMNS["daily_collection"])
+        elif format == "excel":
+            return generate_excel(data, _CSV_COLUMNS["daily_collection"], "Daily_Collection")
         return {
             "report_type": "daily_collection",
             "date": str(target_date),
@@ -88,12 +91,16 @@ def generate_report(
         data = get_monthly_collection(db, year, month)
         if format == "csv":
             return generate_csv(data.get("daily_breakdown", []), _CSV_COLUMNS["monthly_collection"])
+        elif format == "excel":
+            return generate_excel(data.get("daily_breakdown", []), _CSV_COLUMNS["monthly_collection"], "Monthly_Collection")
         return {"report_type": "monthly_collection", **data}
 
     elif report_type == "student_dues":
         data = get_student_dues(db, course_id=course_id, batch=batch)
         if format == "csv":
             return generate_csv(data, _CSV_COLUMNS["student_dues"])
+        elif format == "excel":
+            return generate_excel(data, _CSV_COLUMNS["student_dues"], "Student_Dues")
         return {
             "report_type": "student_dues",
             "total_students": len(data),
@@ -105,6 +112,8 @@ def generate_report(
         data = get_course_wise_collection(db, date_from=date_from, date_to=date_to)
         if format == "csv":
             return generate_csv(data, _CSV_COLUMNS["course_collection"])
+        elif format == "excel":
+            return generate_excel(data, _CSV_COLUMNS["course_collection"], "Course_Collection")
         return {
             "report_type": "course_collection",
             "total_amount": sum(item["total_amount"] for item in data),
@@ -115,6 +124,8 @@ def generate_report(
         data = get_payment_mode_report(db, date_from=date_from, date_to=date_to)
         if format == "csv":
             return generate_csv(data, _CSV_COLUMNS["payment_mode"])
+        elif format == "excel":
+            return generate_excel(data, _CSV_COLUMNS["payment_mode"], "Payment_Mode")
         return {
             "report_type": "payment_mode",
             "total_amount": sum(item["total_amount"] for item in data),
@@ -125,6 +136,8 @@ def generate_report(
         data = get_expense_report(db, date_from=date_from, date_to=date_to)
         if format == "csv":
             return generate_csv(data, _CSV_COLUMNS["expense"])
+        elif format == "excel":
+            return generate_excel(data, _CSV_COLUMNS["expense"], "Expense")
         return {
             "report_type": "expense",
             "total_amount": sum(item["total_amount"] for item in data),
@@ -135,6 +148,8 @@ def generate_report(
         data = get_scholarship_report(db, course_id=course_id, batch=batch)
         if format == "csv":
             return generate_csv(data, _CSV_COLUMNS["scholarship"])
+        elif format == "excel":
+            return generate_excel(data, _CSV_COLUMNS["scholarship"], "Scholarship")
         return {
             "report_type": "scholarship",
             "total_students": len(data),
@@ -153,6 +168,13 @@ def generate_report(
                 "net_balance": data["net_balance"],
             }]
             return generate_csv(flat, _CSV_COLUMNS["profit_loss"])
+        elif format == "excel":
+            flat = [{
+                "total_income": data["total_income"],
+                "total_expenses": data["total_expenses"],
+                "net_balance": data["net_balance"],
+            }]
+            return generate_excel(flat, _CSV_COLUMNS["profit_loss"], "Profit_Loss")
         return {"report_type": "profit_loss", **data}
 
     else:

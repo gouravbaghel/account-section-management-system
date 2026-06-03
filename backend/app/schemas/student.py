@@ -58,6 +58,7 @@ class StudentResponse(BaseModel):
     guardian_phone: str
     category: StudentCategory
     status: StudentStatus
+    is_locked: bool
     created_at: Optional[datetime] = None
 
     class Config:

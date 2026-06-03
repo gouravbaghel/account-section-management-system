@@ -143,6 +143,24 @@ export default function RecordPayment() {
     return total - paid;
   }, [selectedFee]);
 
+  // Fetch late fine automatically
+  useEffect(() => {
+    if (selectedFee && step === 3) {
+      const fetchFine = async () => {
+        try {
+          const { calculateFine } = await import('../api/payments');
+          const res = await calculateFine(selectedFee.id, form.payment_date);
+          if (res && res.fine !== undefined) {
+            setForm(prev => ({ ...prev, late_fine: String(res.fine) }));
+          }
+        } catch (error) {
+          console.error("Failed to calculate fine:", error);
+        }
+      };
+      fetchFine();
+    }
+  }, [selectedFee, form.payment_date, step]);
+
   const computedPayable = useMemo(() => {
     const amount = Number(form.amount) || 0;
     const fine = Number(form.late_fine) || 0;

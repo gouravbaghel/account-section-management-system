@@ -54,6 +54,37 @@ def get_current_user(
     return user
 
 
+def get_current_student(
+    credentials: HTTPAuthorizationCredentials = Depends(security_scheme),
+    db: Session = Depends(get_db),
+):
+    """
+    Decode the JWT token and return the corresponding Student.
+    Raises 401 if invalid.
+    """
+    from app.models.student import Student
+    token = credentials.credentials
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = decode_token(token)
+        student_id: Optional[int] = payload.get("sub")
+        role: Optional[str] = payload.get("role")
+        if student_id is None or role != "student":
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    student = db.query(Student).filter(Student.id == int(student_id)).first()
+    if student is None or student.is_locked:
+        raise credentials_exception
+
+    return student
+
+
 def require_role(*allowed_roles: UserRole):
     """
     Return a dependency that checks whether the current user has one of

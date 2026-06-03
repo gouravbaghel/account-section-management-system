@@ -22,6 +22,7 @@ class FeeStructureCreate(BaseModel):
     admission_fee: float = Field(default=0, ge=0)
     misc_fee: float = Field(default=0, ge=0)
     installment_count: int = Field(default=1, ge=1)
+    due_date: Optional[datetime] = None
 
 
 class FeeStructureUpdate(BaseModel):
@@ -39,6 +40,7 @@ class FeeStructureUpdate(BaseModel):
     admission_fee: Optional[float] = Field(None, ge=0)
     misc_fee: Optional[float] = Field(None, ge=0)
     installment_count: Optional[int] = Field(None, ge=1)
+    due_date: Optional[datetime] = None
     is_active: Optional[bool] = None
 
 
@@ -59,6 +61,7 @@ class FeeStructureResponse(BaseModel):
     misc_fee: float
     total_amount: float
     installment_count: int
+    due_date: Optional[datetime] = None
     is_active: bool
     created_at: Optional[datetime] = None
 
@@ -84,6 +87,7 @@ class StudentFeeResponse(BaseModel):
     balance: float
     status: FeeStatus
     academic_year: str
+    due_date: Optional[datetime] = None
     created_at: Optional[datetime] = None
 
     class Config:
