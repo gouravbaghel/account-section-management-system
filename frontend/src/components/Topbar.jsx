@@ -1,9 +1,12 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getInitials } from '../utils/formatters';
 import { ROLE_LABELS, ROLE_COLORS } from '../utils/constants';
-import { Menu, LogOut, Bell } from 'lucide-react';
+import { Menu, LogOut, Bell, ChevronRight, KeyRound, Loader2 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { changePassword } from '../api/auth';
+import Modal from './Modal';
 
 const pageTitles = {
   '/': 'Dashboard',
@@ -19,16 +22,32 @@ const pageTitles = {
   '/users': 'User Management',
 };
 
-function getPageTitle(pathname) {
-  // Exact match first
-  if (pageTitles[pathname]) return pageTitles[pathname];
-  // Student profile
-  if (pathname.match(/^\/students\/\d+/)) return 'Student Profile';
-  // Partial match
-  for (const [path, title] of Object.entries(pageTitles)) {
-    if (path !== '/' && pathname.startsWith(path)) return title;
+function getBreadcrumbs(pathname) {
+  const paths = pathname.split('/').filter(Boolean);
+  const crumbs = [];
+  
+  if (paths.length === 0) {
+    return [{ title: 'Dashboard', path: '/' }];
   }
-  return 'Dashboard';
+  
+  let currentPath = '';
+  paths.forEach((p, index) => {
+    currentPath += `/${p}`;
+    
+    // Custom labels
+    let title = p.charAt(0).toUpperCase() + p.slice(1).replace('-', ' ');
+    if (pageTitles[currentPath]) {
+      title = pageTitles[currentPath];
+    } else if (index === 1 && paths[0] === 'students') {
+      title = 'Student Profile';
+    } else if (index === 1 && paths[0] === 'payments' && p === 'new') {
+      title = 'Record Payment';
+    }
+    
+    crumbs.push({ title, path: currentPath });
+  });
+  
+  return crumbs;
 }
 
 export default function Topbar({ onMenuClick }) {
@@ -37,7 +56,12 @@ export default function Topbar({ onMenuClick }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const pageTitle = getPageTitle(location.pathname);
+  // Change Password Modal State
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  const breadcrumbs = getBreadcrumbs(location.pathname);
   const initials = getInitials(user?.full_name || user?.username || '');
   const roleLabel = ROLE_LABELS[user?.role] || user?.role;
   const roleColor = ROLE_COLORS[user?.role] || 'bg-gray-100 text-gray-800';
@@ -53,6 +77,25 @@ export default function Topbar({ onMenuClick }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordForm.new_password !== passwordForm.confirm_password) {
+      toast.error('New passwords do not match');
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      await changePassword(passwordForm.current_password, passwordForm.new_password);
+      toast.success('Password changed successfully');
+      setIsPasswordModalOpen(false);
+      setPasswordForm({ current_password: '', new_password: '', confirm_password: '' });
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Failed to change password');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-gray-200/80 h-16">
       <div className="flex items-center justify-between h-full px-4 sm:px-6 lg:px-8">
@@ -64,8 +107,20 @@ export default function Topbar({ onMenuClick }) {
           >
             <Menu className="w-5 h-5" />
           </button>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">{pageTitle}</h1>
+          <div className="flex items-center text-sm">
+            <Link to="/" className="text-gray-500 hover:text-gray-900 transition-colors">Home</Link>
+            {breadcrumbs.map((crumb, idx) => (
+              <div key={crumb.path} className="flex items-center">
+                <ChevronRight className="w-4 h-4 text-gray-400 mx-1" />
+                {idx === breadcrumbs.length - 1 ? (
+                  <span className="font-semibold text-gray-900">{crumb.title}</span>
+                ) : (
+                  <Link to={crumb.path} className="text-gray-500 hover:text-gray-900 transition-colors">
+                    {crumb.title}
+                  </Link>
+                )}
+              </div>
+            ))}
           </div>
         </div>
 
@@ -108,6 +163,16 @@ export default function Topbar({ onMenuClick }) {
                 <button
                   onClick={() => {
                     setDropdownOpen(false);
+                    setIsPasswordModalOpen(true);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                >
+                  <KeyRound className="w-4 h-4 text-gray-400" />
+                  Change Password
+                </button>
+                <button
+                  onClick={() => {
+                    setDropdownOpen(false);
                     logout();
                   }}
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
@@ -120,6 +185,67 @@ export default function Topbar({ onMenuClick }) {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        title="Change Password"
+        size="sm"
+      >
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <div>
+            <label className="label-field">Current Password</label>
+            <input
+              type="password"
+              required
+              className="input-field"
+              value={passwordForm.current_password}
+              onChange={(e) => setPasswordForm({ ...passwordForm, current_password: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label-field">New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              className="input-field"
+              value={passwordForm.new_password}
+              onChange={(e) => setPasswordForm({ ...passwordForm, new_password: e.target.value })}
+              placeholder="Min 8 chars, 1 uppercase, 1 digit"
+            />
+          </div>
+          <div>
+            <label className="label-field">Confirm New Password</label>
+            <input
+              type="password"
+              required
+              minLength={8}
+              className="input-field"
+              value={passwordForm.confirm_password}
+              onChange={(e) => setPasswordForm({ ...passwordForm, confirm_password: e.target.value })}
+            />
+          </div>
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => setIsPasswordModalOpen(false)}
+              className="btn-ghost"
+              disabled={isChangingPassword}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save Password
+            </button>
+          </div>
+        </form>
+      </Modal>
     </header>
   );
 }

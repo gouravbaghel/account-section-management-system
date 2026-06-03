@@ -15,6 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   backend:
     build:
@@ -22,18 +23,19 @@ services:
       dockerfile: Dockerfile
     container_name: college_accounts_backend
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/college_accounts
-      - SECRET_KEY=your-super-secret-key-change-in-production-min-32-chars-long
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-college_accounts}
+      - SECRET_KEY=${SECRET_KEY:-f7a3b9c1d4e8f2a6b0c5d9e3f7a1b4c8d2e6f0a3b7c1d5e9f2a6b0c4d8e1f5a9}
       - CORS_ORIGINS=["http://localhost:5173","http://localhost","http://localhost:80"]
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./backend:/app
+    restart: unless-stopped
     command: >
-      sh -c "python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+      sh -c "python -m app.seed && uvicorn app.main:app --host 0.0.0.0 --port 8000"
 
   frontend:
     build:
@@ -44,6 +46,7 @@ services:
       - "80:80"
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:

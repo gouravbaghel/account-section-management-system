@@ -120,6 +120,10 @@ export default function Reports() {
       toast.error('Please select a report type');
       return;
     }
+    if (dateFrom && dateTo && new Date(dateFrom) > new Date(dateTo)) {
+      toast.error('Start date cannot be after end date');
+      return;
+    }
     setLoading(true);
     setReportData(null);
     try {

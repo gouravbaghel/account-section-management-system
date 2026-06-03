@@ -1,19 +1,21 @@
 """
 Fee structure and student fee assignment routes.
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.orm import Session
 from typing import Optional, List
 
-from app.dependencies import get_db, get_current_user, require_role
+from app.dependencies import get_db, get_current_user, require_role, PaginationParams
 from app.models.user import User, UserRole
 from app.models.fee import FeeStructure, StudentFee, FeeStatus
+from app.models.audit import AuditLog
 from app.models.student import Student
 from app.models.course import Course, Branch
 from app.schemas.fee import (
     FeeStructureCreate, FeeStructureUpdate, FeeStructureResponse,
     StudentFeeResponse, AssignFeeRequest,
 )
+from app.schemas.common import PaginatedResponse
 
 router = APIRouter(prefix="/api/fee-structures", tags=["Fee Structures"])
 student_fee_router = APIRouter(prefix="/api/student-fees", tags=["Student Fees"])
@@ -22,15 +24,16 @@ student_fee_router = APIRouter(prefix="/api/student-fees", tags=["Student Fees"]
 # ──────────────────────────── Fee Structure endpoints ────────────────────────────
 
 
-@router.get("/", response_model=List[FeeStructureResponse])
+@router.get("/", response_model=PaginatedResponse[FeeStructureResponse])
 def list_fee_structures(
     course_id: Optional[int] = Query(None, description="Filter by course"),
     semester: Optional[int] = Query(None, description="Filter by semester"),
     batch: Optional[str] = Query(None, description="Filter by batch"),
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.clerk)),
 ):
-    """List fee structures with optional filters. Requires clerk+ role."""
+    """List fee structures with optional filters and pagination. Requires clerk+ role."""
     query = db.query(FeeStructure).filter(FeeStructure.is_active == True)
 
     if course_id is not None:
@@ -40,13 +43,27 @@ def list_fee_structures(
     if batch is not None:
         query = query.filter(FeeStructure.batch == batch)
 
-    fee_structures = query.order_by(FeeStructure.id.desc()).all()
-    return [FeeStructureResponse.model_validate(fs) for fs in fee_structures]
+    total = query.count()
+    fee_structures = (
+        query
+        .order_by(FeeStructure.id.desc())
+        .offset(pagination.offset)
+        .limit(pagination.size)
+        .all()
+    )
+    items = [FeeStructureResponse.model_validate(fs) for fs in fee_structures]
+    return {
+        "items": items,
+        "total": total,
+        "page": pagination.page,
+        "size": pagination.size,
+    }
 
 
 @router.post("/", response_model=FeeStructureResponse, status_code=status.HTTP_201_CREATED)
 def create_fee_structure(
     fee_data: FeeStructureCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.admin)),
 ):
@@ -71,6 +88,18 @@ def create_fee_structure(
     fee_structure = FeeStructure(**fee_data.model_dump())
     fee_structure.total_amount = fee_structure.compute_total()
     db.add(fee_structure)
+    db.flush()
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="CREATE",
+        entity_type="FeeStructure",
+        entity_id=fee_structure.id,
+        details=f"Created fee structure for course {course.code}, semester {fee_structure.semester}",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(fee_structure)
     return FeeStructureResponse.model_validate(fee_structure)
@@ -80,6 +109,7 @@ def create_fee_structure(
 def update_fee_structure(
     fee_id: int,
     fee_data: FeeStructureUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.admin)),
 ):
@@ -99,6 +129,16 @@ def update_fee_structure(
     # Recompute total
     fee_structure.total_amount = fee_structure.compute_total()
 
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="UPDATE",
+        entity_type="FeeStructure",
+        entity_id=fee_structure.id,
+        details=f"Updated fee structure #{fee_structure.id} fields: {', '.join(update_data.keys())}",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(fee_structure)
     return FeeStructureResponse.model_validate(fee_structure)
@@ -107,13 +147,14 @@ def update_fee_structure(
 # ──────────────────────────── Student Fee endpoints ────────────────────────────
 
 
-@student_fee_router.get("/", response_model=List[StudentFeeResponse])
+@student_fee_router.get("/", response_model=PaginatedResponse[StudentFeeResponse])
 def list_student_fees(
     student_id: int = Query(..., description="Student ID"),
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.clerk)),
 ):
-    """List student fees by student_id. Requires clerk+ role."""
+    """List student fees by student_id with pagination. Requires clerk+ role."""
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(
@@ -121,18 +162,28 @@ def list_student_fees(
             detail=f"Student with id {student_id} not found",
         )
 
+    query = db.query(StudentFee).filter(StudentFee.student_id == student_id)
+    total = query.count()
     student_fees = (
-        db.query(StudentFee)
-        .filter(StudentFee.student_id == student_id)
+        query
         .order_by(StudentFee.id.desc())
+        .offset(pagination.offset)
+        .limit(pagination.size)
         .all()
     )
-    return [StudentFeeResponse.model_validate(sf) for sf in student_fees]
+    items = [StudentFeeResponse.model_validate(sf) for sf in student_fees]
+    return {
+        "items": items,
+        "total": total,
+        "page": pagination.page,
+        "size": pagination.size,
+    }
 
 
 @student_fee_router.post("/assign", response_model=List[StudentFeeResponse], status_code=status.HTTP_201_CREATED)
 def assign_fee_to_students(
     assign_data: AssignFeeRequest,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.admin)),
 ):
@@ -190,6 +241,21 @@ def assign_fee_to_students(
         )
         db.add(student_fee)
         created_fees.append(student_fee)
+
+    db.flush()
+
+    # Audit log
+    if created_fees:
+        audit = AuditLog(
+            user_id=current_user.id,
+            action="ASSIGN_FEE",
+            entity_type="FeeStructure",
+            entity_id=fee_structure.id,
+            details=f"Assigned fee structure #{fee_structure.id} to {len(created_fees)} students",
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        db.add(audit)
 
     db.commit()
 

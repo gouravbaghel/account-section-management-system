@@ -20,7 +20,7 @@ router = APIRouter(prefix="/api/payments", tags=["Payments"])
 
 def _generate_receipt_number(db: Session) -> str:
     """Generate a unique receipt number from CollegeSettings counter."""
-    settings_row = db.query(CollegeSettings).first()
+    settings_row = db.query(CollegeSettings).with_for_update().first()
     if not settings_row:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -166,6 +166,7 @@ def record_payment(
         created_by=current_user.id,
     )
     db.add(payment)
+    db.flush()
 
     # Update student fee
     student_fee.paid_amount = float(student_fee.paid_amount or 0) + payment_data.amount
@@ -176,7 +177,7 @@ def record_payment(
         user_id=current_user.id,
         action="CREATE",
         entity_type="Payment",
-        entity_id=None,  # Will update after flush
+        entity_id=payment.id,
         details=f"Payment of ₹{payment_data.amount} recorded for student '{student.name}' (Receipt: {receipt_number})",
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
@@ -184,10 +185,6 @@ def record_payment(
     db.add(audit)
     db.commit()
     db.refresh(payment)
-
-    # Update audit entity_id
-    audit.entity_id = payment.id
-    db.commit()
 
     resp = PaymentResponse.model_validate(payment)
     resp.student_name = student.name

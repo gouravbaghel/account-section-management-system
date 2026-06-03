@@ -1,5 +1,6 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Search, ChevronUp, ChevronDown, ChevronsLeft, ChevronsRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useDebounce } from '../hooks/useDebounce';
 
 export default function DataTable({
   columns = [],
@@ -18,17 +19,24 @@ export default function DataTable({
   onSort,
   sortField,
   sortDirection,
+  expandedRowId,
+  renderRowExpansion,
 }) {
   const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const [localSort, setLocalSort] = useState({ field: null, direction: 'asc' });
 
   const totalPages = Math.ceil(total / pageSize) || 1;
 
+  // Effect to trigger onSearch when debounced value changes
+  useEffect(() => {
+    if (onSearch) {
+      onSearch(debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm, onSearch]);
+
   const handleSearch = (value) => {
     setSearchTerm(value);
-    if (onSearch) {
-      onSearch(value);
-    }
   };
 
   const handleSort = (columnKey) => {
@@ -155,19 +163,27 @@ export default function DataTable({
               </tr>
             ) : (
               displayData.map((row, rowIdx) => (
-                <tr
-                  key={row.id || rowIdx}
-                  className="hover:bg-gray-50/50 transition-colors"
-                >
-                  {columns.map((col) => (
-                    <td
-                      key={col.key}
-                      className={`px-4 py-3.5 text-sm text-gray-700 ${col.className || ''}`}
-                    >
-                      {col.render ? col.render(row[col.key], row, rowIdx) : row[col.key]}
-                    </td>
-                  ))}
-                </tr>
+                <React.Fragment key={row.id || rowIdx}>
+                  <tr
+                    className="hover:bg-gray-50/50 transition-colors"
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={`px-4 py-3.5 text-sm text-gray-700 ${col.className || ''}`}
+                      >
+                        {col.render ? col.render(row[col.key], row, rowIdx) : row[col.key]}
+                      </td>
+                    ))}
+                  </tr>
+                  {expandedRowId === row.id && renderRowExpansion && (
+                    <tr className="bg-gray-50/30">
+                      <td colSpan={columns.length} className="px-4 py-3 border-t border-gray-50">
+                        {renderRowExpansion(row)}
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))
             )}
           </tbody>

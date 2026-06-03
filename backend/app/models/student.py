@@ -32,7 +32,7 @@ class Student(Base):
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     branch = Column(String(100), nullable=False)
     semester = Column(Integer, nullable=False, default=1)
-    batch = Column(String(20), nullable=False)
+    batch = Column(String(20), index=True, nullable=False)
     phone = Column(String(20), nullable=False)
     email = Column(String(100), nullable=True)
     address = Column(Text, nullable=True)

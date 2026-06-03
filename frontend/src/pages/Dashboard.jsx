@@ -13,6 +13,13 @@ import toast from 'react-hot-toast';
 
 const PIE_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#818cf8', '#6d28d9', '#4f46e5', '#7c3aed'];
 
+const QUICK_ACTIONS = [
+  { label: 'Record Payment', path: '/payments/new', icon: IndianRupee, color: 'bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100' },
+  { label: 'Add Student', path: '/students', icon: GraduationCap, color: 'bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100' },
+  { label: 'Add Expense', path: '/expenses', icon: TrendingUp, color: 'bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100' },
+  { label: 'View Reports', path: '/reports', icon: Clock, color: 'bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100' },
+];
+
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
@@ -113,6 +120,25 @@ export default function Dashboard() {
           color="indigo"
           loading={loading}
         />
+      </div>
+
+      {/* Quick actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
+        {QUICK_ACTIONS.map((action, idx) => {
+          const Icon = action.icon;
+          return (
+            <Link
+              key={idx}
+              to={action.path}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition-all duration-200 ${action.color}`}
+            >
+              <div className="p-2 rounded-lg bg-white/60">
+                <Icon className="w-5 h-5" />
+              </div>
+              <span className="text-sm font-medium">{action.label}</span>
+            </Link>
+          );
+        })}
       </div>
 
       {/* Monthly collection chart */}

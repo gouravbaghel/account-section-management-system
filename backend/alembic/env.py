@@ -18,18 +18,7 @@ from app.config import settings  # noqa: E402
 from app.database import Base  # noqa: E402
 
 # Import all models so that Base.metadata is fully populated
-from app.models import (  # noqa: E402, F401
-    User,
-    Student,
-    FeeStructure,
-    FeePayment,
-    Scholarship,
-    Expense,
-    Salary,
-    BudgetHead,
-    BudgetAllocation,
-    AuditLog,
-)
+from app.models import *  # noqa: E402, F401, F403
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

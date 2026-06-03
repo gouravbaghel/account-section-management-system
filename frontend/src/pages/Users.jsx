@@ -224,18 +224,13 @@ export default function Users() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center">
-            <UsersIcon className="w-5 h-5 text-purple-600" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-            <p className="text-sm text-gray-500">Manage system users and roles</p>
-          </div>
+        <div>
+          <h1 className="page-header">User Management</h1>
+          <p className="text-sm text-gray-500 mt-1">Manage system users and roles</p>
         </div>
         <button
           onClick={openAddModal}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm shadow-sm"
+          className="btn-primary gap-2"
         >
           <UserPlus className="w-4 h-4" />
           Add User
@@ -243,7 +238,7 @@ export default function Users() {
       </div>
 
       {/* Role Legend */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="card">
         <p className="text-xs text-gray-500 mb-2 font-medium">Role Permissions</p>
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-1.5">
@@ -292,14 +287,14 @@ export default function Users() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="label-field">
               Full Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={form.full_name}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+              className="input-field"
               placeholder="e.g. Rajesh Kumar"
             />
             {errors.full_name && <p className="text-xs text-red-500 mt-1">{errors.full_name}</p>}
@@ -307,28 +302,28 @@ export default function Users() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="label-field">
                 Username <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={form.username}
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                className="input-field"
                 placeholder="username"
                 disabled={!!editing}
               />
               {errors.username && <p className="text-xs text-red-500 mt-1">{errors.username}</p>}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="label-field">
                 Email <span className="text-red-500">*</span>
               </label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                className="input-field"
                 placeholder="user@college.edu.in"
               />
               {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
@@ -337,28 +332,28 @@ export default function Users() {
 
           {!editing && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="label-field">
                 Password <span className="text-red-500">*</span>
               </label>
               <input
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
-                placeholder="Minimum 6 characters"
+                className="input-field"
+                placeholder="Minimum 8 characters (Upper, Lower, Digit)"
               />
               {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="label-field">
               Role <span className="text-red-500">*</span>
             </label>
             <select
               value={form.role}
               onChange={(e) => setForm({ ...form, role: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm bg-white"
+              className="select-field"
             >
               <option value="super_admin">Super Admin — Full access</option>
               <option value="admin">Admin — All except user management</option>
@@ -373,14 +368,14 @@ export default function Users() {
             <button
               type="button"
               onClick={() => { setModalOpen(false); setForm(emptyForm); setEditing(null); setErrors({}); }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+              className="btn-secondary"
               disabled={submitting}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm disabled:opacity-50"
+              className="btn-primary gap-2"
               disabled={submitting}
             >
               {submitting ? (

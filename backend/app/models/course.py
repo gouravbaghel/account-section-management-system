@@ -1,7 +1,7 @@
 """
 Course and Branch models.
 """
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -33,6 +33,10 @@ class Branch(Base):
     course_id = Column(Integer, ForeignKey("courses.id"), nullable=False, index=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('name', 'course_id', name='uq_branch_name_course_id'),
+    )
 
     course = relationship("Course", back_populates="branches")
     fee_structures = relationship("FeeStructure", back_populates="branch")

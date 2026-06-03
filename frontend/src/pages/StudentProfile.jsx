@@ -37,8 +37,8 @@ export default function StudentProfile() {
         getPayments({ student_id: id, page_size: 100 }).catch(() => ({ data: [] })),
       ]);
       setStudent(studentData.data || studentData);
-      setFees(feesData.data || feesData.fees || feesData || []);
-      const paymentsList = paymentsData.data || paymentsData.payments || paymentsData || [];
+      setFees(feesData?.items || feesData?.data || feesData?.fees || feesData || []);
+      const paymentsList = paymentsData?.items || paymentsData?.data || paymentsData?.payments || paymentsData || [];
       setPayments(Array.isArray(paymentsList) ? paymentsList : []);
     } catch (error) {
       toast.error('Failed to load student profile');

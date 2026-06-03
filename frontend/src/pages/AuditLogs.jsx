@@ -160,26 +160,29 @@ export default function AuditLogs() {
             <span className="text-sm font-medium">Filters</span>
           </div>
           <div className="flex flex-wrap gap-3 flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Filter by action..."
-                value={filterAction}
-                onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
-                className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm w-[200px]"
-              />
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Filter by entity type..."
-                value={filterEntity}
-                onChange={(e) => { setFilterEntity(e.target.value); setPage(1); }}
-                className="pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm w-[200px]"
-              />
-            </div>
+            <select
+              value={filterAction}
+              onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
+              className="select-field max-w-[200px]"
+            >
+              <option value="">All Actions</option>
+              {Object.keys(ACTION_COLORS).map(action => (
+                <option key={action} value={action}>{action.replace('_', ' ')}</option>
+              ))}
+            </select>
+            <select
+              value={filterEntity}
+              onChange={(e) => { setFilterEntity(e.target.value); setPage(1); }}
+              className="select-field max-w-[200px]"
+            >
+              <option value="">All Entities</option>
+              <option value="student">Student</option>
+              <option value="course">Course</option>
+              <option value="payment">Payment</option>
+              <option value="expense">Expense</option>
+              <option value="user">User</option>
+              <option value="settings">Settings</option>
+            </select>
             {(filterAction || filterEntity) && (
               <button
                 onClick={() => { setFilterAction(''); setFilterEntity(''); setPage(1); }}
@@ -205,53 +208,45 @@ export default function AuditLogs() {
         showSearch={false}
         emptyMessage="No audit logs found"
         emptyIcon={<Shield className="w-12 h-12" />}
-      />
-
-      {/* Expanded Detail Rows */}
-      {expandedRow && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-2">Log Details — ID #{expandedRow}</h4>
-          {(() => {
-            const log = logs.find(l => l.id === expandedRow);
-            if (!log) return <p className="text-sm text-gray-400">Not found</p>;
-            return (
-              <div className="space-y-2">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
-                  <div>
-                    <span className="text-gray-500">Action:</span>
-                    <span className="ml-2 font-medium">{log.action}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Entity:</span>
-                    <span className="ml-2 font-medium">{log.entity_type} #{log.entity_id}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">IP:</span>
-                    <span className="ml-2 font-mono text-xs">{log.ip_address || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-500">Time:</span>
-                    <span className="ml-2">{formatDateTime(log.created_at)}</span>
-                  </div>
+        expandedRowId={expandedRow}
+        renderRowExpansion={(row) => {
+          return (
+            <div className="space-y-2 py-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                <div>
+                  <span className="text-gray-500">Action:</span>
+                  <span className="ml-2 font-medium">{row.action}</span>
                 </div>
-                {log.user_agent && (
-                  <div className="text-xs text-gray-400 font-mono bg-gray-50 rounded p-2 overflow-x-auto">
-                    {log.user_agent}
-                  </div>
-                )}
-                {log.details && (
-                  <div className="mt-2">
-                    <span className="text-xs font-medium text-gray-500">Details:</span>
-                    <pre className="mt-1 text-xs text-gray-700 bg-gray-50 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">
-                      {typeof log.details === 'string' ? log.details : JSON.stringify(log.details, null, 2)}
-                    </pre>
-                  </div>
-                )}
+                <div>
+                  <span className="text-gray-500">Entity:</span>
+                  <span className="ml-2 font-medium">{row.entity_type} #{row.entity_id}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">IP:</span>
+                  <span className="ml-2 font-mono text-xs">{row.ip_address || '—'}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">Time:</span>
+                  <span className="ml-2">{formatDateTime(row.created_at)}</span>
+                </div>
               </div>
-            );
-          })()}
-        </div>
-      )}
+              {row.user_agent && (
+                <div className="text-xs text-gray-400 font-mono bg-white border border-gray-100 rounded p-2 overflow-x-auto">
+                  {row.user_agent}
+                </div>
+              )}
+              {row.details && (
+                <div className="mt-2">
+                  <span className="text-xs font-medium text-gray-500">Details:</span>
+                  <pre className="mt-1 text-xs text-gray-700 bg-white border border-gray-100 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">
+                    {typeof row.details === 'string' ? row.details : JSON.stringify(row.details, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          );
+        }}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Settings as SettingsIcon, Save, Building2, Loader2 } from 'lucide-react
 import toast from 'react-hot-toast';
 import { getSettings, updateSettings } from '../api/settings';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { version } from '../../package.json';
 
 export default function Settings() {
   const [form, setForm] = useState({
@@ -72,14 +73,14 @@ export default function Settings() {
           <SettingsIcon className="w-5 h-5 text-indigo-600" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-sm text-gray-500">Configure college and system settings</p>
+          <h1 className="page-header">Settings</h1>
+          <p className="text-sm text-gray-500 mt-1">Configure college and system settings</p>
         </div>
       </div>
 
       {/* College Information */}
       <form onSubmit={handleSubmit}>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="card p-0 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-gray-500" />
@@ -91,25 +92,25 @@ export default function Settings() {
           <div className="p-6 space-y-5">
             {/* College Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="label-field">
                 College Name <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
                 value={form.college_name}
                 onChange={(e) => setForm({ ...form, college_name: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                className="input-field"
                 placeholder="e.g. National Institute of Technology"
               />
             </div>
 
             {/* Address */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+              <label className="label-field">Address</label>
               <textarea
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm resize-none"
+                className="input-field resize-none"
                 rows={2}
                 placeholder="Full postal address"
               />
@@ -118,22 +119,22 @@ export default function Settings() {
             {/* Phone & Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                <label className="label-field">Phone Number</label>
                 <input
                   type="text"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                  className="input-field"
                   placeholder="+91-XX-XXXX-XXXX"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="label-field">Email</label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                  className="input-field"
                   placeholder="accounts@college.edu.in"
                 />
               </div>
@@ -142,23 +143,23 @@ export default function Settings() {
             {/* Academic Year & Receipt Prefix */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Academic Year</label>
+                <label className="label-field">Academic Year</label>
                 <input
                   type="text"
                   value={form.academic_year}
                   onChange={(e) => setForm({ ...form, academic_year: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                  className="input-field"
                   placeholder="e.g. 2025-2026"
                 />
                 <p className="text-xs text-gray-400 mt-1">Format: YYYY-YYYY</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Receipt Prefix</label>
+                <label className="label-field">Receipt Prefix</label>
                 <input
                   type="text"
                   value={form.receipt_prefix}
                   onChange={(e) => setForm({ ...form, receipt_prefix: e.target.value })}
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+                  className="input-field"
                   placeholder="e.g. NIT"
                 />
                 <p className="text-xs text-gray-400 mt-1">Used in receipt numbers like NIT-2025-00001</p>
@@ -171,7 +172,7 @@ export default function Settings() {
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm disabled:opacity-50 shadow-sm"
+              className="btn-primary gap-2"
             >
               {saving ? (
                 <>
@@ -190,7 +191,7 @@ export default function Settings() {
       </form>
 
       {/* System Information */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="card p-0 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
           <h2 className="text-sm font-semibold text-gray-700">System Information</h2>
         </div>
@@ -198,7 +199,7 @@ export default function Settings() {
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <span className="text-gray-500">Version</span>
-              <p className="font-medium text-gray-900 mt-0.5">1.0.0</p>
+              <p className="font-medium text-gray-900 mt-0.5">{version}</p>
             </div>
             <div>
               <span className="text-gray-500">Backend</span>

@@ -57,7 +57,7 @@ export default function RecordPayment() {
         setSearchLoading(true);
         try {
           const res = await getStudents({ search: preselectedStudentId, page_size: 10 });
-          const students = res.data || res.students || res || [];
+          const students = res.items || res.data || res.students || res || [];
           const found = students.find((s) => String(s.id) === String(preselectedStudentId));
           if (found) {
             setSelectedStudent(found);
@@ -88,7 +88,7 @@ export default function RecordPayment() {
     setFeesLoading(true);
     try {
       const res = await getStudentFees(selectedStudent.id);
-      const feeList = res.data || res.fees || res || [];
+      const feeList = res.items || res.data || res.fees || res || [];
       setFees(Array.isArray(feeList) ? feeList : []);
     } catch (error) {
       toast.error('Failed to load student fees');
@@ -104,7 +104,7 @@ export default function RecordPayment() {
     setHasSearched(true);
     try {
       const res = await getStudents({ search: studentSearch.trim(), page_size: 20 });
-      setStudentResults(res.data || res.students || res || []);
+      setStudentResults(res.items || res.data || res.students || res || []);
     } catch (error) {
       toast.error('Failed to search students');
     } finally {

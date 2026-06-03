@@ -2,7 +2,7 @@
 Fee structure and student fee assignment models.
 """
 import enum
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric, Boolean, Enum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Numeric, Boolean, Enum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -23,7 +23,7 @@ class FeeStructure(Base):
     branch_id = Column(Integer, ForeignKey("branches.id"), nullable=True, index=True)
     semester = Column(Integer, nullable=False)
     batch = Column(String(20), nullable=False)
-    academic_year = Column(String(20), nullable=False)
+    academic_year = Column(String(20), index=True, nullable=False)
     tuition_fee = Column(Numeric(12, 2), nullable=False, default=0)
     exam_fee = Column(Numeric(12, 2), nullable=False, default=0)
     library_fee = Column(Numeric(12, 2), nullable=False, default=0)
@@ -37,6 +37,10 @@ class FeeStructure(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        UniqueConstraint('course_id', 'branch_id', 'semester', 'batch', 'academic_year', name='uq_fee_structure'),
+    )
 
     course = relationship("Course", back_populates="fee_structures")
     branch = relationship("Branch", back_populates="fee_structures")
@@ -70,7 +74,7 @@ class StudentFee(Base):
     discount_amount = Column(Numeric(12, 2), nullable=False, default=0)
     scholarship_amount = Column(Numeric(12, 2), nullable=False, default=0)
     balance = Column(Numeric(12, 2), nullable=False, default=0)
-    status = Column(Enum(FeeStatus), nullable=False, default=FeeStatus.pending)
+    status = Column(Enum(FeeStatus), index=True, nullable=False, default=FeeStatus.pending)
     academic_year = Column(String(20), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

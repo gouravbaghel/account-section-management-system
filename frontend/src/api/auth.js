@@ -14,3 +14,11 @@ export async function getMe() {
   const response = await client.get('/auth/me');
   return response.data;
 }
+
+export async function changePassword(current_password, new_password) {
+  const response = await client.post('/auth/change-password', {
+    current_password,
+    new_password,
+  });
+  return response.data;
+}

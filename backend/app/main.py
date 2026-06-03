@@ -1,8 +1,12 @@
 """
 FastAPI application entry point.
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+import logging
+from pythonjsonlogger import jsonlogger
+import time
+
 from app.config import settings
 from app.database import engine, Base
 
@@ -23,12 +27,54 @@ from app.routers import (
     settings as settings_router,
     users,
 )
+from contextlib import asynccontextmanager
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Any startup logic goes here (e.g., redis connection, initial caching)
+    yield
+    # Any shutdown logic goes here
+
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from app.routers.auth import limiter
+
+# Setup JSON Logging
+logger = logging.getLogger("uvicorn.access")
+logHandler = logging.StreamHandler()
+formatter = jsonlogger.JsonFormatter(
+    '%(asctime)s %(levelname)s %(name)s %(message)s'
+)
+logHandler.setFormatter(formatter)
+logger.addHandler(logHandler)
+logger.propagate = False
 
 app = FastAPI(
     title="College Account Section Management System API",
     version="1.0.0",
     description="Complete backend API for managing college accounts, fees, payments, and expenses.",
+    lifespan=lifespan,
 )
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+    logger.info(
+        "Request processed",
+        extra={
+            "method": request.method,
+            "url": str(request.url),
+            "status_code": response.status_code,
+            "process_time_ms": round(process_time * 1000, 2),
+            "client_ip": request.client.host if request.client else None,
+        }
+    )
+    return response
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.add_middleware(
     CORSMiddleware,
@@ -53,12 +99,6 @@ app.include_router(reports.router)
 app.include_router(audit.router)
 app.include_router(settings_router.router)
 app.include_router(users.router)
-
-
-@app.on_event("startup")
-def startup():
-    """Create all database tables on startup."""
-    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/api/health")

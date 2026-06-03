@@ -13,6 +13,7 @@ from app.models.payment import Payment
 from app.models.audit import AuditLog
 from app.schemas.student import StudentCreate, StudentUpdate, StudentResponse, StudentListResponse
 from app.schemas.payment import PaymentResponse
+from app.schemas.common import PaginatedResponse
 
 router = APIRouter(prefix="/api/students", tags=["Students"])
 
@@ -71,6 +72,7 @@ def list_students(
 @router.post("/", response_model=StudentResponse, status_code=status.HTTP_201_CREATED)
 def create_student(
     student_data: StudentCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.clerk)),
 ):
@@ -100,6 +102,19 @@ def create_student(
 
     student = Student(**student_data.model_dump())
     db.add(student)
+    db.flush()
+
+    # Audit log
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="CREATE",
+        entity_type="Student",
+        entity_id=student.id,
+        details=f"Created student '{student.name}' (Roll: {student.roll_number})",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(student)
 
@@ -195,13 +210,14 @@ def update_student(
     return resp
 
 
-@router.get("/{student_id}/ledger", response_model=list[PaymentResponse])
+@router.get("/{student_id}/ledger", response_model=PaginatedResponse[PaymentResponse])
 def get_student_ledger(
     student_id: int,
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Get a student's payment ledger."""
+    """Get a student's payment ledger with pagination."""
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(
@@ -209,17 +225,25 @@ def get_student_ledger(
             detail=f"Student with id {student_id} not found",
         )
 
+    query = db.query(Payment).filter(Payment.student_id == student_id)
+    total = query.count()
     payments = (
-        db.query(Payment)
-        .filter(Payment.student_id == student_id)
+        query
         .order_by(Payment.payment_date.desc(), Payment.created_at.desc())
+        .offset(pagination.offset)
+        .limit(pagination.size)
         .all()
     )
 
-    results = []
+    items = []
     for p in payments:
         resp = PaymentResponse.model_validate(p)
         resp.student_name = student.name
-        results.append(resp)
+        items.append(resp)
 
-    return results
+    return {
+        "items": items,
+        "total": total,
+        "page": pagination.page,
+        "size": pagination.size,
+    }

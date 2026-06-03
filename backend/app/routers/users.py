@@ -1,31 +1,43 @@
 """
 User management routes: list, create, update, deactivate. Super admin only.
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.dependencies import get_db, require_role
+from app.dependencies import get_db, require_role, PaginationParams
 from app.models.user import User, UserRole
+from app.models.audit import AuditLog
 from app.schemas.user import UserCreate, UserUpdate, UserResponse
+from app.schemas.common import PaginatedResponse
 from app.utils.security import get_password_hash
 
 router = APIRouter(prefix="/api/users", tags=["Users"])
 
 
-@router.get("/", response_model=List[UserResponse])
+@router.get("/", response_model=PaginatedResponse[UserResponse])
 def list_users(
+    pagination: PaginationParams = Depends(),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.super_admin)),
 ):
-    """List all users. Super admin only."""
-    users = db.query(User).order_by(User.id).all()
-    return [UserResponse.model_validate(u) for u in users]
+    """List all users with pagination. Super admin only."""
+    query = db.query(User)
+    total = query.count()
+    users = query.order_by(User.id).offset(pagination.offset).limit(pagination.size).all()
+    items = [UserResponse.model_validate(u) for u in users]
+    return {
+        "items": items,
+        "total": total,
+        "page": pagination.page,
+        "size": pagination.size,
+    }
 
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(
     user_data: UserCreate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.super_admin)),
 ):
@@ -55,6 +67,18 @@ def create_user(
         is_active=True,
     )
     db.add(user)
+    db.flush()
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="CREATE",
+        entity_type="User",
+        entity_id=user.id,
+        details=f"Created user '{user.username}' with role '{user.role}'",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(user)
     return UserResponse.model_validate(user)
@@ -64,6 +88,7 @@ def create_user(
 def update_user(
     user_id: int,
     user_data: UserUpdate,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.super_admin)),
 ):
@@ -89,6 +114,16 @@ def update_user(
     for field, value in update_data.items():
         setattr(user, field, value)
 
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="UPDATE",
+        entity_type="User",
+        entity_id=user.id,
+        details=f"Updated user '{user.username}' fields: {', '.join(update_data.keys())}",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(audit)
     db.commit()
     db.refresh(user)
     return UserResponse.model_validate(user)
@@ -97,6 +132,7 @@ def update_user(
 @router.delete("/{user_id}", status_code=status.HTTP_200_OK)
 def deactivate_user(
     user_id: int,
+    request: Request,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_role(UserRole.super_admin)),
 ):
@@ -116,5 +152,16 @@ def deactivate_user(
         )
 
     user.is_active = False
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="DEACTIVATE",
+        entity_type="User",
+        entity_id=user.id,
+        details=f"Deactivated user '{user.username}'",
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+    db.add(audit)
     db.commit()
     return {"message": f"User '{user.username}' deactivated successfully"}

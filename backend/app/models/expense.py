@@ -32,7 +32,7 @@ class Expense(Base):
         name="expense_payment_mode"
     ), nullable=False)
     bill_number = Column(String(100), nullable=True)
-    expense_date = Column(Date, nullable=False)
+    expense_date = Column(Date, index=True, nullable=False)
     remarks = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -33,7 +33,7 @@ class Payment(Base):
     payment_mode = Column(Enum(PaymentMode), nullable=False)
     transaction_id = Column(String(100), nullable=True)
     cheque_number = Column(String(50), nullable=True)
-    payment_date = Column(Date, nullable=False)
+    payment_date = Column(Date, index=True, nullable=False)
     late_fine = Column(Numeric(12, 2), nullable=False, default=0)
     discount = Column(Numeric(12, 2), nullable=False, default=0)
     scholarship_adjustment = Column(Numeric(12, 2), nullable=False, default=0)

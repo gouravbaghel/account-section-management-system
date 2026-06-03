@@ -4,18 +4,28 @@ Loads from environment variables and .env file.
 """
 from typing import List
 from pydantic_settings import BaseSettings
+from pydantic import field_validator, ValidationInfo
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment or .env file."""
 
+    ENVIRONMENT: str = "development"
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/college_accounts"
-    SECRET_KEY: str = "f7a3b9c1d4e8f2a6b0c5d9e3f7a1b4c8d2e6f0a3b7c1d5e9f2a6b0c4d8e1f5a9"
+    SECRET_KEY: str = "change-me-in-production-f7a3b9c1d4e8f2a6"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    CORS_ORIGINS: List[str] = ["*"]
+    CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def validate_secret_key(cls, v: str, info: ValidationInfo) -> str:
+        env = info.data.get("ENVIRONMENT", "development")
+        if env == "production" and v == "change-me-in-production-f7a3b9c1d4e8f2a6":
+            raise ValueError("SECRET_KEY must be set in production")
+        return v
 
     COLLEGE_NAME: str = "National Institute of Technology"
     COLLEGE_ADDRESS: str = "Main Campus Road, Bangalore - 560001"

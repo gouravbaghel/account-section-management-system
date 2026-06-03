@@ -68,7 +68,7 @@ client.interceptors.response.use(
       }
 
       try {
-        const response = await axios.post('/api/auth/refresh', {
+        const response = await axios.post(`${client.defaults.baseURL}/auth/refresh`, {
           refresh_token: refreshToken,
         });
 
@@ -90,6 +90,15 @@ client.interceptors.response.use(
       } finally {
         isRefreshing = false;
       }
+    }
+
+    // Standardize error messages
+    if (error.response) {
+      error.customMessage = error.response.data?.detail || error.response.data?.message || `Server error: ${error.response.status}`;
+    } else if (error.request) {
+      error.customMessage = 'Network error. Please check your connection or CORS settings.';
+    } else {
+      error.customMessage = error.message;
     }
 
     return Promise.reject(error);

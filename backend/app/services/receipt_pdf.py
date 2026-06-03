@@ -14,6 +14,8 @@ from reportlab.platypus import (
     SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 )
 from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+import qrcode
+from reportlab.platypus import Image as RLImage
 
 from app.utils.helpers import amount_to_words, format_currency
 
@@ -45,6 +47,15 @@ def generate_receipt_pdf(
         topMargin=15 * mm,
         bottomMargin=15 * mm,
     )
+
+    def watermark(canvas, doc):
+        canvas.saveState()
+        canvas.setFont('Helvetica-Bold', 60)
+        canvas.setFillGray(0.9)
+        canvas.translate(doc.width / 2 + doc.leftMargin, doc.height / 2 + doc.bottomMargin)
+        canvas.rotate(45)
+        canvas.drawCentredString(0, 0, "PAYMENT RECEIPT")
+        canvas.restoreState()
 
     styles = getSampleStyleSheet()
 
@@ -296,12 +307,20 @@ def generate_receipt_pdf(
     elements.append(pay_table)
     elements.append(Spacer(1, 15 * mm))
 
-    # ---- Signature Area ----
+    # ---- Signature & QR Area ----
+    # Generate QR Code
+    qr_data = f"Receipt: {receipt_number}\nAmount: {format_currency(payment_amount)}\nStudent: {student_name}"
+    qr = qrcode.make(qr_data)
+    qr_img_buffer = io.BytesIO()
+    qr.save(qr_img_buffer, format="PNG")
+    qr_img_buffer.seek(0)
+    qr_image = RLImage(qr_img_buffer, width=2.5*cm, height=2.5*cm)
+
     sig_data = [
-        [Paragraph("", styles["Normal"]), Paragraph("_________________________", ParagraphStyle("SL", parent=styles["Normal"], alignment=TA_CENTER))],
-        [Paragraph("", styles["Normal"]), Paragraph("<b>Authorized Signatory</b>", ParagraphStyle("AS", parent=styles["Normal"], alignment=TA_CENTER, fontSize=9))],
+        [qr_image, Paragraph("", styles["Normal"]), Paragraph("_________________________", ParagraphStyle("SL", parent=styles["Normal"], alignment=TA_CENTER))],
+        [Paragraph("", styles["Normal"]), Paragraph("", styles["Normal"]), Paragraph("<b>Authorized Signatory</b>", ParagraphStyle("AS", parent=styles["Normal"], alignment=TA_CENTER, fontSize=9))],
     ]
-    sig_table = Table(sig_data, colWidths=[doc.width * 0.6, doc.width * 0.4])
+    sig_table = Table(sig_data, colWidths=[3*cm, doc.width * 0.6 - 3*cm, doc.width * 0.4])
     sig_table.setStyle(TableStyle([
         ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
         ("TOPPADDING", (0, 0), (-1, -1), 1),
@@ -316,6 +335,6 @@ def generate_receipt_pdf(
     elements.append(Paragraph(f"This is a computer-generated receipt. Generated on {now}.", footer_style))
     elements.append(Paragraph("For any queries, please contact the Accounts Section.", footer_style))
 
-    doc.build(elements)
+    doc.build(elements, onFirstPage=watermark, onLaterPages=watermark)
     buffer.seek(0)
     return buffer

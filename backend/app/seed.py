@@ -65,9 +65,11 @@ def seed_database():
             },
         ]
 
-        hashed_pw = get_password_hash("password123")
         users = []
         for ud in users_data:
+            # Generate a strong default password based on username
+            strong_password = f"{ud['username'].capitalize()}@123!"
+            hashed_pw = get_password_hash(strong_password)
             user = User(
                 username=ud["username"],
                 email=ud["email"],
