@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from app.database import get_db
+from app.dependencies import get_db
 from app.dependencies import get_current_user, require_role, PaginationParams
 from app.models.user import UserRole, User
 from app.models.noc import NOCRequest

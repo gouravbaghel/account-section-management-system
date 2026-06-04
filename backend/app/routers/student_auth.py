@@ -4,7 +4,7 @@ Student Authentication router.
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.dependencies import get_db
 from app.schemas.student_auth import StudentLoginRequest, StudentTokenResponse, StudentSetPasswordRequest
 from app.services.auth import authenticate_student, create_student_tokens
 from app.models.student import Student

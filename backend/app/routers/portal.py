@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from typing import List
 
-from app.database import get_db
+from app.dependencies import get_db
 from app.dependencies import get_current_student
 from app.models.student import Student
 from app.models.fee import StudentFee
