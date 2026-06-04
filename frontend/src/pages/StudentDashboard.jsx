@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import client from '../api/client';
 import LoadingSpinner from '../components/LoadingSpinner';
-import { formatCurrency } from '../utils/helpers';
+import { formatCurrency } from '../utils/formatters';
 import { format } from 'date-fns';
 
 export default function StudentDashboard() {
